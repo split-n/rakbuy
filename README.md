@@ -1,0 +1,2 @@
+# rakbuy
+rakuten buy script
