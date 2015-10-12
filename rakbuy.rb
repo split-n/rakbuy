@@ -12,7 +12,21 @@ class RakBuy
   end
 
   def empty_cart
+    cart_page = @agent.get("https://basket.step.rakuten.co.jp/rms/mall/bs/cartall/")
+    if cart_page.uri.to_s.include?("cartempty")
+      @logger.info("Cart is already empty.")
+      return
+    end
 
+    delete_btns = cart_page.search('td[width="40"][bgcolor="#ffffff"] > font[size="-1"] > a')
+    delete_links = delete_btns.map{|a| a.attribute("href").value }
+    delete_links.each do |link|
+      sleep 0.3
+      @agent.get link
+      @logger.info("A cart item deleted.")
+    end
+
+    @logger.info("Cart is (maybe) empty.")
   end
 
   # 購入可能になったらreturn true
@@ -41,6 +55,7 @@ class RakBuy
 
     logged_page = form.submit
     raise StandardError, "Login failed" if logged_page.search(".mr-name").empty?
+    @logger.info("Logged.")
   end
 
   # if can_buy, return page. if stopped, return nil.
@@ -75,4 +90,5 @@ item_url = ARGV[2]
 logger = Logger.new(STDOUT)
 
 rak_buy = RakBuy.new(username, password, item_url, logger)
+rak_buy.empty_cart
 #rak_buy.start_poll_and_buy
