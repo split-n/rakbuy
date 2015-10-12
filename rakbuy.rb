@@ -40,7 +40,7 @@ class RakBuy
     form.field_with(name: "p").value = password
 
     logged_page = form.submit
-    p logged_page
+    raise StandardError, "Login failed" if logged_page.search(".mr-name").empty?
   end
 
   # if can_buy, return page. if stopped, return nil.
