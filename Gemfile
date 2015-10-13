@@ -1,9 +1,4 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-gem "mechanize"
-
-group :development do
-  gem "pry"
-  gem "pry-byebug"
-  gem "pry-rescue"
-end
+# Specify your gem's dependencies in rakbuy.gemspec
+gemspec
