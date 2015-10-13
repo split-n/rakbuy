@@ -37,7 +37,7 @@ class RakBuy
   def start_poll_and_buy
     page = start_poll_page
     if page
-      buy(page)
+      buy_item(page)
     end
   end
 
@@ -74,12 +74,37 @@ class RakBuy
   end
 
   def can_buy(item_page)
-
+    true
   end
 
   # return: succeed?
   def buy_item(item_page)
+    cart_page = enter_item_to_cart(item_page)
 
+    cart_order_forms = cart_page.forms_with(action: "https://basket.step.rakuten.co.jp/rms/mall/bs/cart/set")
+    if cart_order_forms.length > 1
+      raise StandardError, "2 or more shops in cart."
+    end
+  end
+
+  # return cart_page if succeed
+  def enter_item_to_cart(item_page)
+    buy_forms = item_page.forms_with(method: "POST").select{|f|
+      f.button_with(value: "買い物かごに入れる") != nil
+    }
+
+    if buy_forms.length == 0
+      raise StandardError, "No item found."
+    end
+
+    if buy_forms.length > 1
+      raise StandardError, "2 or more items found."
+    end
+
+    buy_form = buy_forms.first
+
+    cart_page = buy_form.submit
+    cart_page
   end
 end
 
@@ -90,5 +115,4 @@ item_url = ARGV[2]
 logger = Logger.new(STDOUT)
 
 rak_buy = RakBuy.new(username, password, item_url, logger)
-rak_buy.empty_cart
-#rak_buy.start_poll_and_buy
+rak_buy.start_poll_and_buy
