@@ -1,8 +1,9 @@
 require 'rakbuy'
 
-username = ARGV[0]
-password = ARGV[1]
-item_url = ARGV[2]
+username = ENV["RAKBUY_USERID"]
+password = ENV["RAKBUY_PASSWORD"]
+
+item_url = ARGV[0]
 
 logger = Logger.new(STDOUT)
 
