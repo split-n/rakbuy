@@ -15,7 +15,7 @@ class RakBuy
 
   def empty_cart
     cart_page = @agent.get("https://basket.step.rakuten.co.jp/rms/mall/bs/cartall/")
-    if cart_page.uri.to_s.include?("cartempty")
+    if cart_empty?(cart_page)
       @logger.info("Cart is already empty.")
       return
     end
@@ -106,6 +106,14 @@ class RakBuy
     buy_form = buy_forms.first
 
     cart_page = buy_form.submit
+    if cart_empty?(cart_page)
+      raise StandardError, "Failed to add item to cart."
+    end
+
     cart_page
+  end
+
+  def cart_empty?(cart_page)
+    cart_page.uri.to_s.include?("cartempty")
   end
 end
