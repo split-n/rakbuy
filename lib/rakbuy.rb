@@ -10,6 +10,9 @@ class RakBuy
     @stop_poll = false
     @logger = logger
 
+    @username = username
+    @password = password
+
     login(username, password)
   end
 
@@ -29,11 +32,6 @@ class RakBuy
     end
 
     @logger.info("Cart is (maybe) empty.")
-  end
-
-  # 購入可能になったらreturn true
-  def start_poll
-    return !!start_poll_page
   end
 
   def start_poll_and_buy
@@ -70,13 +68,22 @@ class RakBuy
 
       page = @agent.get(@item_url)
       if can_buy(page)
+        @logger.info("Poll result: CAN BUY")
         return page
+      else
+        @logger.info("Poll result: can't buy")
       end
     end
   end
 
   def can_buy(item_page)
-    true
+    before_sale = item_page.search(".preSalesMsg").empty?
+    has_buy_form = item_page.forms_with(method: "POST").select{|f|
+      f.button_with(value: "買い物かごに入れる") != nil
+    }.length == 1
+
+    binding.pry
+    before_sale && has_buy_form
   end
 
   # return: succeed?
@@ -87,6 +94,24 @@ class RakBuy
     if cart_order_forms.length > 1
       raise StandardError, "2 or more shops in cart."
     end
+
+    order_page = cart_order_forms.first.submit
+
+    if order_page.uri.to_s.end_with?("bs/orderfrom/")
+      login_form = order_page.form_with(name:"login")
+      login_form.field_with(name: "u").value = @username
+      login_form.field_with(name: "p").value = @password
+      order_page = login_form.submit
+      @logger.info("Logged in orderfrom")
+    end
+
+    unless order_page.uri.to_s.end_with?("rms/mall/bs/confirmorderquicknormalize/")
+      raise StandardError, "not order page"
+    end
+
+    order_form = order_page.form_with(id: "mainForm")
+    submit_button = order_form.button_with(value: "注文を確定する")
+    # order_form.click_button(submit_button)
   end
 
   # return cart_page if succeed
