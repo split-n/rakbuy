@@ -82,7 +82,6 @@ class RakBuy
       f.button_with(value: "買い物かごに入れる") != nil
     }.length == 1
 
-    binding.pry
     before_sale && has_buy_form
   end
 
@@ -111,7 +110,16 @@ class RakBuy
 
     order_form = order_page.form_with(id: "mainForm")
     submit_button = order_form.button_with(value: "注文を確定する")
-    # order_form.click_button(submit_button)
+    if(false) # safe for debugging
+      ordered_page = order_form.click_button(submit_button)
+      if ordered_page.title.include?("注文受付")
+        @logger.info("Maybe bought item.")
+      else
+        @logger.info("Order send, but page title is #{ordered_page.title}")
+      end
+    else
+      binding.pry
+    end
   end
 
   # return cart_page if succeed
