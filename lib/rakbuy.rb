@@ -67,6 +67,8 @@ class RakBuy
       end
 
       page = @agent.get(@item_url)
+
+      check_item_page(page)
       if can_buy(page)
         @logger.info("Poll result: CAN BUY")
         return page
@@ -128,14 +130,6 @@ class RakBuy
       f.button_with(value: "買い物かごに入れる") != nil
     }
 
-    if buy_forms.length == 0
-      raise StandardError, "No item found."
-    end
-
-    if buy_forms.length > 1
-      raise StandardError, "2 or more items found."
-    end
-
     buy_form = buy_forms.first
 
     cart_page = buy_form.submit
@@ -148,5 +142,19 @@ class RakBuy
 
   def cart_empty?(cart_page)
     cart_page.uri.to_s.include?("cartempty")
+  end
+
+  def check_item_page(item_page)
+    buy_forms = item_page.forms_with(method: "POST").select{|f|
+      f.button_with(value: "買い物かごに入れる") != nil
+    }
+
+    if buy_forms.length == 0
+      raise StandardError, "No item found."
+    end
+
+    if buy_forms.length > 1
+      raise StandardError, "2 or more items found."
+    end
   end
 end
