@@ -41,6 +41,15 @@ class RakBuy
     end
   end
 
+  def start_poll_at(time)
+    poll_page_once
+    @logger.info("Start polling at #{time}")
+    until Time.now > time
+      sleep 1
+    end
+    start_poll_and_buy
+  end
+
   def stop_poll
     @stop_poll = true
   end
@@ -65,7 +74,14 @@ class RakBuy
         @stop_poll = false
         return nil
       end
+      page = poll_page_once
+      return page if page
 
+      sleep 0.2
+    end
+  end
+
+  def poll_page_once
       page = @agent.get(@item_url)
 
       check_item_page(page)
@@ -74,17 +90,13 @@ class RakBuy
         return page
       else
         @logger.info("Poll result: can't buy")
+        return false
       end
-      sleep 0.2
-    end
   end
 
   def can_buy(item_page)
     before_sale = item_page.search(".preSalesMsg").empty?
-    has_buy_form = item_page.forms_with(method: "POST").select{|f|
-      f.button_with(value: "買い物かごに入れる") != nil
-    }.length == 1
-
+    has_buy_form = buy_forms(item_page).length == 1
     before_sale && has_buy_form
   end
 
@@ -120,6 +132,7 @@ class RakBuy
       else
         @logger.info("Order send, but page title is #{ordered_page.title}")
       end
+      binding.pry
     else
       binding.pry
     end
@@ -127,11 +140,7 @@ class RakBuy
 
   # return cart_page if succeed
   def enter_item_to_cart(item_page)
-    buy_forms = item_page.forms_with(method: "POST").select{|f|
-      f.button_with(value: "買い物かごに入れる") != nil
-    }
-
-    buy_form = buy_forms.first
+    buy_form = buy_forms(item_page).first
 
     cart_page = buy_form.submit
     if cart_empty?(cart_page)
@@ -146,9 +155,7 @@ class RakBuy
   end
 
   def check_item_page(item_page)
-    buy_forms = item_page.forms_with(method: "POST").select{|f|
-      f.button_with(value: "買い物かごに入れる") != nil
-    }
+    buy_forms = buy_forms(item_page)
 
     if buy_forms.length == 0
       raise StandardError, "No item found."
@@ -157,5 +164,12 @@ class RakBuy
     if buy_forms.length > 1
       raise StandardError, "2 or more items found."
     end
+  end
+
+  def buy_forms(item_page)
+    item_page.forms_with(method: "POST").select{|f|
+      f.button_with(value: "買い物かごに入れる") != nil ||
+      f.button_with(value: "お買い物かごに入れる") != nil
+    }
   end
 end
