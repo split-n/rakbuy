@@ -43,10 +43,12 @@ class RakBuy
 
   def start_poll_at(time)
     poll_page_once
-    @logger.info("Start polling at #{time}")
-    until Time.now > time
-      sleep 1
-    end
+    @logger.info("Sleep until #{time}.")
+    sleep_time = (time - Time.now) - 30
+    sleep sleep_time
+    @logger.info("Start polling in 30 sec.")
+    sleep 29
+
     start_poll_and_buy
   end
 
