@@ -75,6 +75,7 @@ class RakBuy
       else
         @logger.info("Poll result: can't buy")
       end
+      sleep 0.2
     end
   end
 
